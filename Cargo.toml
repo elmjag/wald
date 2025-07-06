@@ -1,0 +1,9 @@
+[package]
+name = "wald"
+version = "0.0.0"
+edition = "2024"
+
+[dependencies]
+bevy = { version = "0.16.1", features = ["dynamic_linking"] }
+bevy_dylib = "0.16.1"
+
