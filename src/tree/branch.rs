@@ -5,7 +5,10 @@ use std::f32::consts::TAU;
 
 const SEGMENTS: usize = 5;
 
-fn base_vertices(num: usize) -> Vec<[f32; 3]> {
+#[derive(Component)]
+pub struct Branch {}
+
+fn base_vertices(num: usize, scale: f32) -> Vec<[f32; 3]> {
     let mut vertices: Vec<[f32; 3]> = Vec::new();
     let step = TAU / num as f32;
 
@@ -13,7 +16,7 @@ fn base_vertices(num: usize) -> Vec<[f32; 3]> {
         let angle = step * (n as f32);
         let rot = Rot2::radians(angle);
 
-        vertices.push([rot.cos, 0.0, rot.sin]);
+        vertices.push([rot.cos * scale, 0.0, rot.sin * scale]);
     }
 
     vertices
@@ -35,8 +38,8 @@ fn triangle_indices(num: usize) -> Indices {
     Indices::U32(indices)
 }
 
-pub fn create_branch(height: f32) -> Mesh {
-    let mut vertices = base_vertices(SEGMENTS);
+pub fn create_mesh(height: f32) -> Mesh {
+    let mut vertices = base_vertices(SEGMENTS, height.ln() / 10.0);
     vertices.push([0.0, height, 0.0]);
 
     // not sure about this, be seems to work OK
