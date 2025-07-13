@@ -6,7 +6,27 @@ use std::f32::consts::TAU;
 const SEGMENTS: usize = 5;
 
 #[derive(Component)]
-pub struct Branch {}
+pub struct Branch {
+    birth_time: f32,
+}
+
+impl Branch {
+    pub fn new(now: f32) -> Self {
+        Branch { birth_time: now }
+    }
+
+    fn age(&self, now: f32) -> f32 {
+        now - self.birth_time
+    }
+
+    fn length(&self, now: f32) -> f32 {
+        self.age(now) * 0.3
+    }
+
+    pub fn get_mesh(&self, now: f32) -> Mesh {
+        create_mesh(self.length(now))
+    }
+}
 
 fn base_vertices(num: usize, scale: f32) -> Vec<[f32; 3]> {
     let mut vertices: Vec<[f32; 3]> = Vec::new();
@@ -38,9 +58,11 @@ fn triangle_indices(num: usize) -> Indices {
     Indices::U32(indices)
 }
 
-pub fn create_mesh(height: f32) -> Mesh {
-    let mut vertices = base_vertices(SEGMENTS, height.ln() / 10.0);
-    vertices.push([0.0, height, 0.0]);
+pub fn create_mesh(length: f32) -> Mesh {
+    let base_scale = length.ln() / 10.0;
+
+    let mut vertices = base_vertices(SEGMENTS, base_scale);
+    vertices.push([0.0, length, 0.0]);
 
     // not sure about this, be seems to work OK
     // perhaps we need to do something more sofisticated
