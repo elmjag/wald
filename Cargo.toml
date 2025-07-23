@@ -7,3 +7,6 @@ edition = "2024"
 bevy = { version = "0.16.1", features = ["dynamic_linking"] }
 bevy_dylib = "0.16.1"
 
+# Enable max optimizations for dependencies, but not for our code:
+[profile.dev.package."*"]
+opt-level = 3
