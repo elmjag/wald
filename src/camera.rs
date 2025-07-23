@@ -34,7 +34,7 @@ pub fn zoom(
     let mut trans = query.single_mut().unwrap();
 
     for ev in evr_wheel.read() {
-        trans.translation.z += ev.y;
+        trans.translation.z -= ev.y;
     }
 }
 
