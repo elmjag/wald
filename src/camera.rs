@@ -56,7 +56,7 @@ pub fn setup(
             shadows_enabled: true,
             ..default()
         },
-        Transform::from_xyz(4.0, 8.0, 4.0),
+        Transform::from_xyz(4.0, 12.0, 4.0),
     ));
 
     // camera
