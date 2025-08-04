@@ -1,22 +1,31 @@
 use bevy::prelude::*;
 pub mod branch;
 use branch::Branch;
-use std::f32::consts::TAU;
+
+use rand::SeedableRng;
+use rand::rngs::SmallRng;
+
+mod angles;
+use angles::new_branch_angle;
+
+const RND_SEED: u64 = 0;
 
 #[derive(Component)]
 pub struct Tree {
     branch_angles: Vec<f32>,
+    rng: SmallRng,
 }
 
 impl Tree {
     pub fn new() -> Self {
         Tree {
             branch_angles: vec![],
+            rng: SmallRng::seed_from_u64(RND_SEED),
         }
     }
 
-    pub fn get_new_branch_angle(&self) -> f32 {
-        (self.branch_angles.len() as f32) * TAU * 0.25
+    pub fn get_new_branch_angle(&mut self) -> f32 {
+        new_branch_angle(&self.branch_angles, &mut self.rng)
     }
 }
 
@@ -29,7 +38,7 @@ fn maybe_add_branch(
     trunk: &Branch,
 ) {
     let trunk_length = trunk.length(now);
-    let expected_children = (trunk_length / 1.4) as usize;
+    let expected_children = (trunk_length / 0.69) as usize;
 
     while expected_children > tree.branch_angles.len() {
         let new_branch_angle = tree.get_new_branch_angle();
