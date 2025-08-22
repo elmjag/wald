@@ -3,14 +3,19 @@ use bevy::math::u32;
 use bevy::prelude::*;
 use bevy::render::mesh::{Indices, PrimitiveTopology};
 use core::f32;
-use std::f32::consts::TAU;
+use std::f32::consts::{PI, TAU};
 
 const SEGMENTS: usize = 5;
+const LEAF_SPACING: f32 = 0.24;
+const LENGTH_RATIO: f32 = 1.5;
 
-#[derive(Component)]
+use crate::assets::LoadedAssets;
+
+#[derive(Component, Debug)]
 pub struct Branch {
     birth_time: f32,
     growth_rate: f32,
+    leaf_pairs: u32,
 }
 
 impl Branch {
@@ -18,6 +23,7 @@ impl Branch {
         Branch {
             birth_time: now,
             growth_rate: growth_rate,
+            leaf_pairs: 0,
         }
     }
 
@@ -29,12 +35,16 @@ impl Branch {
         let age = self.age(now);
 
         let length = if age <= 1.64 {
-            return age * 0.3;
+            return age * 0.3 * LENGTH_RATIO;
         } else {
-            age.ln()
+            age.ln() * LENGTH_RATIO
         };
 
         length * self.growth_rate
+    }
+
+    pub fn expected_leaf_pairs(&self, now: f32) -> u32 {
+        ((self.length(now) - LEAF_SPACING * 0.2) / LEAF_SPACING) as u32
     }
 
     pub fn get_mesh(&self, now: f32) -> Mesh {
@@ -127,10 +137,62 @@ pub fn update(
     let now = time.elapsed_secs();
 
     for (entity_id, branch) in branches.iter_mut() {
+        /*
+         * grow branch
+         *
+         * replace it's old mesh with new one
+         * with updated dimensions
+         */
         let mesh_handle: Handle<Mesh> = meshes.add(branch.get_mesh(now));
         commands
             .entity(entity_id)
             .remove::<Mesh3d>()
             .insert(Mesh3d(mesh_handle));
+    }
+}
+
+pub fn spawn_leafs(
+    mut commands: Commands,
+    time: Res<Time>,
+    assets: Res<LoadedAssets>,
+    mut branches: Query<(Entity, &mut Branch)>,
+) {
+    let now = time.elapsed_secs();
+
+    let right_leaf_rot = Quat::from_rotation_z(-0.5);
+    let left_leaf_rot = right_leaf_rot * Quat::from_rotation_y(PI);
+
+    for (entity_id, mut branch) in branches.iter_mut() {
+        let expected_pairs = branch.expected_leaf_pairs(now);
+
+        while branch.leaf_pairs < expected_pairs {
+            let leaf_height = ((branch.leaf_pairs + 1) as f32) * LEAF_SPACING;
+
+            //
+            // spawn 'right' leaf
+            //
+            let leaf = commands
+                .spawn((
+                    Mesh3d(assets.leaf_mesh.clone()),
+                    MeshMaterial3d(assets.leaf_material.clone()),
+                    Transform::from_xyz(0.0, leaf_height, 0.0).with_rotation(right_leaf_rot),
+                ))
+                .id();
+            commands.entity(entity_id).add_child(leaf);
+
+            //
+            // spawn 'left' leaf
+            //
+            let leaf = commands
+                .spawn((
+                    Mesh3d(assets.leaf_mesh.clone()),
+                    MeshMaterial3d(assets.leaf_material.clone()),
+                    Transform::from_xyz(0.0, leaf_height, 0.0).with_rotation(left_leaf_rot),
+                ))
+                .id();
+            commands.entity(entity_id).add_child(leaf);
+
+            branch.leaf_pairs += 1;
+        }
     }
 }
